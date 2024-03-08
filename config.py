@@ -1,13 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
--------------------------------------------------
-   @File Name:     config.py
-   @Author:        Luyao.zhang
-   @Date:          2023/5/16
-   @Description: configuration file
--------------------------------------------------
-"""
 from pathlib import Path
 import sys
 
@@ -47,3 +37,9 @@ DETECTION_MODEL_LIST = [
 
 OBJECT_COUNTER = None
 OBJECT_COUNTER1 = None
+
+person_in = 0
+person_out = 0
+
+person_count = 0
+

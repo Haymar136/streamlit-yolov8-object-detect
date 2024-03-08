@@ -1,13 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
--------------------------------------------------
-   @File Name:     utils.py
-   @Author:        Luyao.zhang
-   @Date:          2023/5/16
-   @Description:
--------------------------------------------------
-"""
 from ultralytics import YOLO
 import streamlit as st
 import cv2
@@ -95,7 +85,7 @@ def infer_uploaded_image(conf, model):
                                     conf=conf)
                 boxes = res[0].boxes
                 res_plotted = res[0].plot()[:, :, ::-1]
-
+                
                 with col2:
                     st.image(res_plotted,
                              caption="Detected Image",

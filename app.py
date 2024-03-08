@@ -1,13 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
--------------------------------------------------
-   @File Name:     app.py
-   @Author:        Luyao.zhang
-   @Date:          2023/5/15
-   @Description:
--------------------------------------------------
-"""
 from pathlib import Path
 import streamlit as st
 
@@ -26,7 +16,7 @@ st.set_page_config(
 st.title("Interactive Interface for YOLOv8")
 
 # sidebar
-st.sidebar.header("DL Model Config")
+st.sidebar.header("Config")
 
 # model options
 task_type = st.sidebar.selectbox(

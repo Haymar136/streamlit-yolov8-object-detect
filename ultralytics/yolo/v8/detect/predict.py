@@ -117,7 +117,6 @@ def UI_box(x, img, color=None, label=None, line_thickness=None):
 
         cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
-
 def intersect(A,B,C,D):
     return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)
 
@@ -146,6 +145,9 @@ def get_direction(point1, point2):
 
     return direction_str
 def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
+    person_in = 0
+    person_out = 0
+
     cv2.line(img, line[0], line[1], (46,162,112), 3)
     height, width, _ = img.shape
     # remove tracked point from buffer if object is lost
@@ -172,7 +174,7 @@ def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
         color = compute_color_for_labels(object_id[i])
         obj_name = names[object_id[i]]
         label = '{}{:d}'.format("", id) + ":"+ '%s' % (obj_name)
-
+        
         # add center to buffer
         data_deque[id].appendleft(center)
         if len(data_deque[id]) >= 2:
@@ -182,13 +184,22 @@ def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
               if "South" in direction:
                 if obj_name not in object_counter:
                     object_counter[obj_name] = 1
+                    if obj_name == "person":
+                        person_out = 1
                 else:
                     object_counter[obj_name] += 1
+                    if obj_name == "person":
+                        person_out += 1
               if "North" in direction:
                 if obj_name not in object_counter1:
                     object_counter1[obj_name] = 1
+                    if obj_name == "person":
+                        person_in = 1
                 else:
                     object_counter1[obj_name] += 1
+                    if obj_name == "person":
+                        person_in += 1
+        
         UI_box(box, img, label=label, color=color, line_thickness=2)
         # draw trail
         for i in range(1, len(data_deque[id])):
@@ -204,20 +215,23 @@ def draw_boxes(img, bbox, names, object_id, identities=None, offset=(0, 0)):
         for idx, (key, value) in enumerate(object_counter1.items()):
             cnt_str = str(key) + ":" +str(value)
             cv2.line(img, (width - 500,25), (width,25), [85,45,255], 40)
-            cv2.putText(img, f'Number of Vehicles Entering', (width - 500, 35), 0, 1, [225, 255, 255], thickness=2, lineType=cv2.LINE_AA)
+            cv2.putText(img, f'Numbers of Incoming', (width - 500, 35), 0, 1, [225, 255, 255], thickness=2, lineType=cv2.LINE_AA)
             cv2.line(img, (width - 150, 65 + (idx*40)), (width, 65 + (idx*40)), [85, 45, 255], 30)
             cv2.putText(img, cnt_str, (width - 150, 75 + (idx*40)), 0, 1, [255, 255, 255], thickness = 2, lineType = cv2.LINE_AA)
 
         for idx, (key, value) in enumerate(object_counter.items()):
             cnt_str1 = str(key) + ":" +str(value)
             cv2.line(img, (20,25), (500,25), [85,45,255], 40)
-            cv2.putText(img, f'Numbers of Vehicles Leaving', (11, 35), 0, 1, [225, 255, 255], thickness=2, lineType=cv2.LINE_AA)    
+            cv2.putText(img, f'Numbers of Outgoing', (11, 35), 0, 1, [225, 255, 255], thickness=2, lineType=cv2.LINE_AA)    
             cv2.line(img, (20,65+ (idx*40)), (127,65+ (idx*40)), [85,45,255], 30)
             cv2.putText(img, cnt_str1, (11, 75+ (idx*40)), 0, 1, [225, 255, 255], thickness=2, lineType=cv2.LINE_AA)
     
     config.OBJECT_COUNTER = object_counter
     config.OBJECT_COUNTER1 = object_counter1
-
+    config.person_in = person_in
+    config.person_out = person_out
+    print("Incoming people: ", config.person_in)
+    print("Outgoing people: ", config.person_out)
     return img
 
 class DetectionPredictor(BasePredictor):
@@ -244,6 +258,8 @@ class DetectionPredictor(BasePredictor):
     
     def write_results(self, idx, results, batch):
         """Write inference results to a file or directory."""
+        personCount = 0
+
         p, im, im0 = batch
         log_string = ''
         all_outputs = []
@@ -279,7 +295,12 @@ class DetectionPredictor(BasePredictor):
         for c in result.boxes.cls.unique():
             n = (result.boxes.cls == c).sum()  # detections per class
             log_string += f"{n} {self.model.names[int(c)]}{'s' * (n > 1)}, "
-                
+            if self.model.names[int(c)] == "person":
+                personCount += n  
+
+        config.person_count = personCount   
+        print("Total people count: ", config.person_count)
+        
         # Write
         if self.args.save_txt:
             result.save_txt(f'{self.txt_path}.txt', save_conf=self.args.save_conf)
@@ -306,7 +327,7 @@ class DetectionPredictor(BasePredictor):
             object_id = outputs[:, -1]
             
             draw_boxes(im0, bbox_xyxy, self.model.names, object_id,identities)
-
+       
         return log_string
 
 
